@@ -7,10 +7,8 @@ pyximport.install(setup_args={
 from . import kmers
 
 def encode_fasta(args, input_file, output_file):
-    
     '''
-    Returns the number of sequences encoded
-
+    Encode all the sequences in the input (FASTA) file to disk.
 
     Check the file `ALGORITHM.md` for a description of the on-disk format
 
@@ -24,10 +22,14 @@ def encode_fasta(args, input_file, output_file):
     Example
     -------
     encode_fastq( { .. }, open(input_file_name, 'rt'), open(output_file_name, 'wb'))
+
+    Returns
+    -------
+    n : int,
+        The number of sequences encoded
     '''
     
-    #make list of kmers for each sequence
-    for i, seq in SeqIO.parse(input_file, 'fasta'):
+    for i, seq in enumerate(SeqIO.parse(input_file, 'fasta')):
         #encode sequence, then compute kmers for that sequence
         ascii_encoded_sequence = seq.seq.encode('ascii')
         kmers_array = kmers.kmers( ascii_encoded_sequence )
@@ -56,6 +58,5 @@ def encode_fasta(args, input_file, output_file):
         encoded = np.vstack([kmers_array, ixs]).T.ravel()
         output_file.write(encoded.data)
 
-    #number of sequences encoded
     return i+1
 
