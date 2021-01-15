@@ -39,12 +39,12 @@ def _read_blocks(ifile, nbytes):
             return
         yield _from_buffer(data).copy()
 
-def sort_partials(args, encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
+def sort_partials(encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
     splits_dir = path.join(tdir, 'splits')
     makedirs(splits_dir)
     partials = []
     for block in _read_blocks(encoded_stream, block_nbytes):
-        ofname = path.join(splits_dir, 'split_{}'.format(len(partials)))
+        ofname = path.join(splits_dir, 'split_{:02}'.format(len(partials)))
         partials.append(ofname)
         with open(ofname, 'wb') as out:
             block = block[np.argsort(block.T[0])]
@@ -52,7 +52,27 @@ def sort_partials(args, encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
     return partials
 
 
-def merge_stream(bufs, out, block_nbytes):
+def merge_streams(bufs, out, block_nbytes):
+    '''
+    Merge sorted streams
+
+    Parameters
+    ----------
+    bufs : list of file_buffer
+    out : file-like (for output)
+    block_nbytes : int
+    '''
+    # ALGORITHM
+    #
+    # At each step, we want to read at least block_nbytes from one of the
+    # buffers. So, at each step, we first peek into the buffers and find the
+    # one where the corresponding kmer value is lowest. Then, we read from all
+    # the buffers up to that point (remember that they are all pre-sorted).
+    # Now, we merge those chunks and output.
+    #
+    # Therefore, each iteration will make at least `block_nbytes` worth of
+    # progress, but maybe more.
+
     while bufs:
         min_k = np.uint64(-1)
         # For the first pass, we could, in principle, just seek() to the right
@@ -78,3 +98,32 @@ def merge_stream(bufs, out, block_nbytes):
             cur = np.concatenate(cur)
             cur = cur[np.argsort(cur.T[0])]
             out.write(cur.data)
+
+def sort_kmer_pairs(args : dict, enc, out):
+    '''
+    Sort kmer pairs
+
+    Parameters
+    ----------
+    args : dictionary
+        Arguments
+            block_nbytes : int
+            tempdir : str
+            verbose : bool, optional
+    enc : file-like
+        Encoded file
+    out : file-like
+        Output file
+    '''
+
+    block_nbytes = args['block_mbytes'] * 1024 * 1024
+
+    sp = sort_partials(enc, args['tempdir'], block_nbytes=block_nbytes)
+    if args.get('verbose'):
+        print(f'Sort step 1 (of 2) finished')
+
+    bufs = [file_buffer(f) for f in sp]
+    block_mbytes_per_block = 1 + args['block_mbytes']//len(sp)
+    merge_streams(bufs, out, block_nbytes=1024*1024*block_mbytes_per_block)
+    if args.get('verbose'):
+        print(f'Sort finished')
