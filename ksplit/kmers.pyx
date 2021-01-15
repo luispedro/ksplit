@@ -18,9 +18,8 @@ cdef uint64_t encode_nt_c(char nt) nogil:
     if nt == b'G': return encode_nt(b'C')
     return -1
 
-cdef _kmers(char* seq, int n):
-    cdef int KMER_SIZE = 31
-    out = np.zeros(n - KMER_SIZE + 1, np.uint64)
+cdef _kmers(char* seq, int n, int kmer_size):
+    out = np.zeros(n - kmer_size + 1, np.uint64)
 
     cdef uint64_t kmer = 0
     cdef uint64_t kmer_rc = 0
@@ -32,18 +31,18 @@ cdef _kmers(char* seq, int n):
 
         kmer >>= 2
         kmer_rc <<= 2
-        kmer_rc &= ~(<uint64_t>0x3 << (2*KMER_SIZE))
+        kmer_rc &= ~(<uint64_t>0x3 << (2*kmer_size))
         nte = encode_nt(seq[i])
         if nte == -1:
             return
-        kmer |= nte << ((KMER_SIZE - 1) * 2);
+        kmer |= nte << ((kmer_size - 1) * 2);
         kmer_rc |= encode_nt_c(seq[i])
-        if i >= (KMER_SIZE - 1):
+        if i >= (kmer_size - 1):
             out[j] = min(kmer, kmer_rc)
             j += 1
     return out
 
-def kmers(seq):
+def kmers(seq, kmer_size):
     '''Compute all kmers for input nucleotide sequence
 
     Parameters
@@ -51,10 +50,13 @@ def kmers(seq):
     seq : bytes
         input nucleotide sequence
 
+    kmer_size : int
+        k-mer size
+
     Returns
     -------
     kmers : ndarray
         kmers encoded as integers in a NumPy array
     '''
-    return _kmers(<bytes>seq, len(seq))
+    return _kmers(<bytes>seq, len(seq), int(kmer_size))
 
