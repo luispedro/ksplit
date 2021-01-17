@@ -10,9 +10,11 @@ TATATATATATTTCTTGTAATTTGTTGGAATACGAGAACATCGTCAATAATATATCGTATGAATTGAACCACACGGCACA
 HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 '''
 
+KMER_SIZE = 31
+
 def _encoded(fq):
     out = BytesIO()
-    ksplit.encode_fastq({}, BytesIO(fq.encode('ascii')), out)
+    ksplit.encode_fastq({}, BytesIO(fq.encode('ascii')), KMER_SIZE, out)
     return out.getvalue()
 
 def _is_sorted(arr):
@@ -27,7 +29,7 @@ def test_sort_partials(tmpdir):
 
     data = _encoded(fq)
     full = sort._from_buffer(data)
-    sp = sort.sort_partials({}, BytesIO(data), tmpdir, block_nbytes=16*8*2)
+    sp = sort.sort_partials(BytesIO(data), tmpdir, block_nbytes=16*8*2)
     assert sum(stat(f).st_size for f in sp) == len(data)
 
     blocks = [sort._from_buffer(open(f, 'rb').read()) for f in sp]
@@ -40,10 +42,10 @@ def test_merge(tmpdir):
     out = BytesIO()
     data = _encoded(fq)
     full = sort._from_buffer(data)
-    sp = sort.sort_partials({}, BytesIO(data), tmpdir, block_nbytes=16*8*2)
+    sp = sort.sort_partials(BytesIO(data), tmpdir, block_nbytes=16*8*2)
     out = BytesIO()
     bufs = [sort.file_buffer(f) for f in sp]
-    sort.merge_stream(bufs, out, 128)
+    sort.merge_streams(bufs, out, 128)
     full_s = sort._from_buffer(out.getvalue())
 
     assert _is_sorted(full_s.T[0])

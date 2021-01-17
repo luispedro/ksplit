@@ -40,6 +40,8 @@ def _read_blocks(ifile, nbytes):
         yield _from_buffer(data).copy()
 
 def sort_partials(encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
+    '''Sort partial files
+    '''
     splits_dir = path.join(tdir, 'splits')
     makedirs(splits_dir)
     partials = []

@@ -7,29 +7,31 @@ pyximport.install(setup_args={
 
 from ksplit import kmers
 
+KMER_SIZE = 31
+
 def test_kmers():
     testing = 'ATTTAACATGAGATAACATGCATGCATGCATTGCGGCTCAGCTAGTCAGCTAGCTAGCTAGCTACGATCGATCGTAGCATCGATCGATCGATCGATCGATCGATCGTACGTACGTAGCTACGATCGTAGCTAGCTAG'
 
     testing = testing.encode('ascii')
-    print(kmers.kmers(testing))
+    print(kmers.kmers(testing, KMER_SIZE))
 
     testing = 'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
     testing = testing.encode('ascii')
-    print(kmers.kmers(testing))
+    print(kmers.kmers(testing, KMER_SIZE))
 
 
 def test_error_detection():
     testing = 'ATTTAACATGAGXTAACATGCATGCATGCAT'
     testing = testing.encode('ascii')
-    assert kmers.kmers(testing) is None
+    assert kmers.kmers(testing, KMER_SIZE) is None
 
 
 def test_kmers1():
     testing = 'TTTCTTTTTTTTTTTTTTTTTTTTTTTTTTT'
     testing = testing.encode('ascii')
-    ks = kmers.kmers(testing)
-    assert len(testing) == 31
+    ks = kmers.kmers(testing, KMER_SIZE)
+    assert len(testing) == KMER_SIZE
     assert len(ks) == 1
 
 def rc(t):
@@ -49,8 +51,8 @@ def test_kmers_reverse():
             'ATTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
             'AAAAAAAAAAATTTTTTTTTTTTTTTTTTTT',
             ]:
-        assert np.all(kmers.kmers(t.encode('ascii'))
-                    == kmers.kmers(rc(t).encode('ascii')))
+        assert np.all(kmers.kmers(t.encode('ascii'), KMER_SIZE)
+                    == kmers.kmers(rc(t).encode('ascii'), KMER_SIZE))
 
 
 def test_kmers_reverse_embed():
@@ -58,10 +60,10 @@ def test_kmers_reverse_embed():
 
     t0 = k + 'C'
     t1 = rc(k) + 'T'
-    assert kmers.kmers(t0.encode('ascii'))[0] == kmers.kmers(t1.encode('ascii'))[0]
+    assert kmers.kmers(t0.encode('ascii'), KMER_SIZE)[0] == kmers.kmers(t1.encode('ascii'), KMER_SIZE)[0]
 
 def test_max62():
-    assert len('{:b}'.format(kmers.kmers('GACATAGCGACGCGGACCCCCTTTTTTTTTTGG'.encode('ascii')).max())) <= 62
+    assert len('{:b}'.format(kmers.kmers('GACATAGCGACGCGGACCCCCTTTTTTTTTTGG'.encode('ascii'), KMER_SIZE).max())) <= 62
 
 def test_kmers_different():
     ks = [
@@ -70,19 +72,18 @@ def test_kmers_different():
         'ATTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
         'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTA',
         ]
-    ks = [kmers.kmers(k.encode('ascii'))[0] for k in ks]
+    ks = [kmers.kmers(k.encode('ascii'), KMER_SIZE)[0] for k in ks]
     assert len(ks) == len(set(ks))
 
 def test_regression_kmers():
     "regression on kmer computation"
-    ks_c = kmers.kmers(b'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC')
-    ks_g = kmers.kmers(b'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG')
+    ks_c = kmers.kmers(b'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC', KMER_SIZE)
+    ks_g = kmers.kmers(b'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG', KMER_SIZE)
     assert len(set(ks_c)) == 1
     assert len(set(ks_g)) == 1
     assert np.all(ks_c == ks_g)
 
 
-KMER_SIZE = 31
 
 def  encode_nt(nt):
     if type(nt) == str:
@@ -119,16 +120,16 @@ def test_naive(seq):
     import numpy as np
     n = np.array([encode_kmer_min(seq[i:i+KMER_SIZE])
                             for i in range(len(seq) - KMER_SIZE + 1)])
-    fast = kmers.kmers(seq.encode('ascii'))
+    fast = kmers.kmers(seq.encode('ascii'), KMER_SIZE)
     assert len(n) == len(fast)
     assert np.all(n == fast)
 
 @given(seq=st.text(alphabet='ATGC', min_size=KMER_SIZE, max_size=65))
 def test_shift(seq):
     import numpy as np
-    shifted = np.array([kmers.kmers(seq[i:i+KMER_SIZE].encode('ascii'))[0]
+    shifted = np.array([kmers.kmers(seq[i:i+KMER_SIZE].encode('ascii'), KMER_SIZE)[0]
                             for i in range(len(seq) - KMER_SIZE + 1)])
-    fast = kmers.kmers(seq.encode('ascii'))
+    fast = kmers.kmers(seq.encode('ascii'), KMER_SIZE)
     assert len(shifted) == len(fast)
     assert np.all(shifted == fast)
 
