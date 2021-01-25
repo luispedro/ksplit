@@ -118,14 +118,16 @@ def sort_kmer_pairs(args : dict, enc, out):
         Output file
     '''
 
+    import tempfile
     block_nbytes = args['block_mbytes'] * 1024 * 1024
 
-    sp = sort_partials(enc, args['tempdir'], block_nbytes=block_nbytes)
-    if args.get('verbose'):
-        print(f'Sort step 1 (of 2) finished')
+    with tempfile.TemporaryDirectory(dir=args.get('tempdir')) as tdir:
+        sp = sort_partials(enc, tdir, block_nbytes=block_nbytes)
+        if args.get('verbose'):
+            print(f'Sort step 1 (of 2) finished')
 
-    bufs = [file_buffer(f) for f in sp]
-    block_mbytes_per_block = 1 + args['block_mbytes']//len(sp)
-    merge_streams(bufs, out, block_nbytes=1024*1024*block_mbytes_per_block)
-    if args.get('verbose'):
-        print(f'Sort finished')
+        bufs = [file_buffer(f) for f in sp]
+        block_mbytes_per_block = 1 + args['block_mbytes']//len(sp)
+        merge_streams(bufs, out, block_nbytes=1024*1024*block_mbytes_per_block)
+        if args.get('verbose'):
+            print(f'Sort finished')
