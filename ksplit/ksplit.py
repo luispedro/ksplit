@@ -38,15 +38,13 @@ def encode_fastq(args, ifile, kmer_size : int, out):
                 raise ValueError("Something wrong!")
             ks.append(k)
 
-        # TODO This reorganization of the ks could be done in one step without
-        # generating the intermediate arrays, but it would require somewhat
-        # more complex code:
         if len(ks) == 1:
             [ks] = ks
         else:
             ks = np.concatenate(ks)
-        ixs = np.repeat(np.array([i], dtype=np.uint64), len(ks))
-        encoded = np.vstack([ks, ixs]).T.ravel()
+        encoded = np.empty((len(ks), 2), dtype=np.uint64)
+        encoded.T[0] = ks
+        encoded.T[1] = i
         out.write(encoded.data)
     return i + 1
 
@@ -101,8 +99,9 @@ def encode_fasta(args, input_file, kmer_size, output_file):
                                  "Error at iteration {} of input file.".format(i))
 
         #format and write to output file
-        ixs = np.repeat(np.array([i], dtype=np.uint64), len(kmers_array))
-        encoded = np.vstack([kmers_array, ixs]).T.ravel()
+        encoded = np.empty((len(kmers_array), 2), dtype=np.uint64)
+        encoded.T[0] = kmers_array
+        encoded.T[1] = i
         output_file.write(encoded.data)
 
     return i+1
