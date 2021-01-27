@@ -94,15 +94,6 @@ def  encode_nt(nt):
     if nt == b'G': return 3
     return -1
 
-def rc1(nt):
-    return {
-            'A': 'T',
-            'T': 'A',
-            'C': 'G',
-            'G' : 'C'
-            }[nt]
-def rc(s):
-    return ''.join(rc1(si) for si in s[::-1])
 
 def encode_kmer(k):
     return int(''.join(['{:02b}'.format(encode_nt(ki)) for ki in k[::-1]]),2)
@@ -111,6 +102,19 @@ def encode_kmer_rc(k):
     return encode_kmer(rc(k))
 
 def encode_kmer_min(k):
+    #updates read according to IUPAC rules
+    k = k \
+        .replace('N', 'A')\
+        .replace('M', 'A')\
+        .replace('R', 'A')\
+        .replace('K', 'G')\
+        .replace('Y', 'C')\
+        .replace('S', 'G')\
+        .replace('W', 'A')\
+        .replace('B', 'C')\
+        .replace('D', 'A')\
+        .replace('H', 'A')\
+        .replace('V', 'A')
     assert len(k) == KMER_SIZE
     return min(encode_kmer(k),
                 encode_kmer_rc(k))
@@ -134,4 +138,13 @@ def test_shift(seq):
     assert np.all(shifted == fast)
 
 
+
+@given(seq=st.text(alphabet='ATGCNMRYKSB', min_size=KMER_SIZE, max_size=65))
+def test_extended_IUPAC_alphabet(seq):
+    import numpy as np
+    n = np.array([encode_kmer_min(seq[i:i+KMER_SIZE])
+                            for i in range(len(seq) - KMER_SIZE + 1)])
+    fast = kmers.kmers(seq.encode('ascii'), KMER_SIZE)
+    assert len(n) == len(fast)
+    assert np.all(n == fast)
 

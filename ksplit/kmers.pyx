@@ -9,6 +9,24 @@ cdef uint64_t encode_nt(char nt) nogil:
     if nt == b'C': return 1
     if nt == b'T': return 2
     if nt == b'G': return 3
+
+    # The below can all be treated as 'A'
+    if nt == b'N': return 0
+    if nt == b'M': return 0
+    if nt == b'R': return 0
+    if nt == b'W': return 0
+    if nt == b'D': return 0
+    if nt == b'H': return 0
+    if nt == b'V': return 0
+
+    # These can code for 'C'
+    if nt == b'Y': return 1
+    if nt == b'B': return 1
+
+    # These can code for 'G'
+    if nt == b'K': return 3
+    if nt == b'S': return 3
+
     return -1
 
 cdef uint64_t encode_nt_c(char nt) nogil:
@@ -16,6 +34,24 @@ cdef uint64_t encode_nt_c(char nt) nogil:
     if nt == b'C': return encode_nt(b'G')
     if nt == b'T': return encode_nt(b'A')
     if nt == b'G': return encode_nt(b'C')
+
+    # The below can all be treated as 'A'
+    if nt == b'N': return encode_nt(b'T')
+    if nt == b'M': return encode_nt(b'T')
+    if nt == b'R': return encode_nt(b'T')
+    if nt == b'W': return encode_nt(b'T')
+    if nt == b'D': return encode_nt(b'T')
+    if nt == b'H': return encode_nt(b'T')
+    if nt == b'V': return encode_nt(b'T')
+
+    # These can code for 'C'
+    if nt == b'Y': return encode_nt(b'G')
+    if nt == b'B': return encode_nt(b'G')
+
+    # These can code for 'G'
+    if nt == b'K': return encode_nt(b'C')
+    if nt == b'S': return encode_nt(b'C')
+
     return -1
 
 cdef _kmers(char* seq, int n, int kmer_size):

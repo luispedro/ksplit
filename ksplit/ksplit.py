@@ -31,9 +31,7 @@ def encode_fastq(args, ifile, kmer_size : int, out):
     for i,seqs in enumerate(fastq_iter(ifile)):
         ks = []
         for seq in seqs:
-            # Below is a major hack, but this was actually done by SOAP too
-            seq = seq.seq.replace(b'N', b'A')
-            k = kmers.kmers(seq, kmer_size)
+            k = kmers.kmers(seq.seq, kmer_size)
             if k is None:
                 raise ValueError("Something wrong!")
             ks.append(k)
@@ -76,27 +74,12 @@ def encode_fasta(args, input_file, kmer_size, output_file):
     '''
 
     for i, seq in enumerate(SeqIO.parse(input_file, 'fasta')):
-        #encode sequence, then compute kmers for that sequence
-        ascii_encoded_sequence = seq.seq.encode('ascii')
-        kmers_array = kmers.kmers(ascii_encoded_sequence, kmer_size)
+        kmers_array = kmers.kmers(seq.seq.encode('ascii'), kmer_size)
 
-        #checks if current sequence has a character other than ACTG
         if kmers_array is None:
-
-            #updates read according to IUPAC rules
-            ascii_encoded_sequence =\
-            ascii_encoded_sequence.replace(b'N', b'A').replace(b'M', b'A').\
-            replace(b'R', b'A').replace(b'K', b'G').replace(b'Y', b'C').\
-            replace(b'S',b'G').replace(b'W',b'A').replace(b'B',b'C').\
-            replace(b'D',b'A').replace(b'H',b'A').replace(b'V',b'A')
-
-            #recomputes kmers for the sequence
-            kmers_array = kmers.kmers(ascii_encoded_sequence, kmer_size)
-
-            if kmers_array is None:
-                raise ValueError("Something wrong with sequence.",
-                                 "Faulty sequence is: {}.".format(ascii_encoded_sequence),
-                                 "Error at iteration {} of input file.".format(i))
+            raise ValueError("Something wrong with sequence.",
+                             "Faulty sequence is: {}.".format(seq.seq),
+                             "Error at sequence #{} of input file.".format(i))
 
         #format and write to output file
         encoded = np.empty((len(kmers_array), 2), dtype=np.uint64)
