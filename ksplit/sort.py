@@ -35,7 +35,7 @@ def _read_blocks(ifile, nbytes):
         data = ifile.read(nbytes)
         if not data:
             return
-        yield _from_buffer(data).copy()
+        yield _from_buffer(data)
 
 def sort_partials(encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
     '''Sort partial files
