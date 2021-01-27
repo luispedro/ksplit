@@ -18,8 +18,7 @@ class file_buffer:
 
     def peek(self, nbytes):
         if nbytes > len(self.buf):
-            nbytes -= len(self.buf)
-            read_size = max(4096, nbytes)
+            read_size = max(4096, nbytes - len(self.buf))
             self.buf += self.handle.read(read_size)
         return self.buf[:nbytes]
 
@@ -32,7 +31,6 @@ def _from_buffer(data):
     return np.frombuffer(data, np.uint64).reshape((-1, 2))
 
 def _read_blocks(ifile, nbytes):
-    n = nbytes / (2 * 8)
     while True:
         data = ifile.read(nbytes)
         if not data:
