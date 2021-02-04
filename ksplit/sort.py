@@ -4,7 +4,11 @@ import numpy as np
 class file_buffer:
     '''file object wrapper with cheap peek()ing'''
     def __init__(self, fname):
-        self.handle = open(fname, 'rb')
+        if fname.endswith('.gz'):
+            import gzip
+            self.handle = gzip.open(fname, 'rb')
+        else:
+            self.handle = open(fname, 'rb')
         self.buf = b''
 
 
