@@ -47,7 +47,7 @@ def encode_fastq(args, ifile, kmer_size : int, out):
     return i + 1
 
 
-def encode_fasta(args, input_file, kmer_size, output_file):
+def encode_fasta(args, input_file, kmer_size : int, output_file):
     '''
     Encode all the sequences in the input (FASTA) file to disk.
 
@@ -65,7 +65,7 @@ def encode_fasta(args, input_file, kmer_size, output_file):
 
     Example
     -------
-    encode_fasta( { .. }, open(input_file_name, 'rt'), open(output_file_name, 'wb'))
+    encode_fasta( { .. }, open(input_file_name, 'rt'), kmer_size, open(output_file_name, 'wb'))
 
     Returns
     -------
