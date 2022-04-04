@@ -22,17 +22,27 @@ def _is_sorted(arr):
     c.sort()
     return np.all(c == arr)
 
+def _f_size(f):
+    if f.endswith('.gz'):
+        import gzip
+        with gzip.open(f, 'rb') as ifile:
+            s = 0
+            while buf := ifile.read(4096):
+                s += len(buf)
+            return s
+    return stat(f).st_size
 
 def test_sort_partials(tmpdir):
     import operator
     import functools
+    import gzip
 
     data = _encoded(fq)
     full = sort._from_buffer(data)
     sp = sort.sort_partials(BytesIO(data), tmpdir, block_nbytes=16*8*2)
-    assert sum(stat(f).st_size for f in sp) == len(data)
+    assert sum(_f_size(f) for f in sp) == len(data)
 
-    blocks = [sort._from_buffer(open(f, 'rb').read()) for f in sp]
+    blocks = [sort._from_buffer(gzip.open(f, 'rb').read()) for f in sp]
     assert functools.reduce(operator.or_, (set(block.T[0]) for block in blocks)) == set(full.T[0])
 
     for b in blocks:

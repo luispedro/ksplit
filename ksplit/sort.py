@@ -44,13 +44,14 @@ def _read_blocks(ifile, nbytes):
 def sort_partials(encoded_stream, tdir, *, block_nbytes=1024*1024*1024):
     '''Sort partial files
     '''
+    import gzip
     splits_dir = path.join(tdir, 'splits')
     makedirs(splits_dir)
     partials = []
     for block in _read_blocks(encoded_stream, block_nbytes):
-        ofname = path.join(splits_dir, 'split_{:02}'.format(len(partials)))
+        ofname = path.join(splits_dir, 'split_{:02}.ks.gz'.format(len(partials)))
         partials.append(ofname)
-        with open(ofname, 'wb') as out:
+        with gzip.open(ofname, 'wb', compresslevel=1) as out:
             block = block[np.argsort(block.T[0])]
             out.write(block.data)
     return partials
