@@ -1,4 +1,3 @@
-from Bio import SeqIO
 import pyximport
 import numpy as np
 pyximport.install(setup_args={
@@ -7,6 +6,7 @@ pyximport.install(setup_args={
 
 from . import kmers
 from .fastq import fastq_iter
+from .fasta import fasta_iter
 
 def encode_fastq(args, ifile, kmer_size : int, out):
     '''
@@ -73,8 +73,8 @@ def encode_fasta(args, input_file, kmer_size : int, output_file):
         The number of sequences encoded
     '''
 
-    for i, seq in enumerate(SeqIO.parse(input_file, 'fasta')):
-        kmers_array = kmers.kmers(seq.seq.encode('ascii'), kmer_size)
+    for i, (_, seq) in enumerate(fasta_iter(input_file)):
+        kmers_array = kmers.kmers(seq.encode('ascii'), kmer_size)
 
         if kmers_array is None:
             raise ValueError("Something wrong with sequence.",
